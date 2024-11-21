@@ -1,23 +1,32 @@
-# Use the official Node.js 18 image with Alpine Linux as the base image
-FROM node:18-alpine
+FROM node:18-alpine AS development
 
-# Set the working directory in the container
-WORKDIR /app
+WORKDIR /usr/src/app
+COPY  *.json ./
+COPY pnpm-lock.yaml ./
+COPY  . ./
+RUN npm i -g pnpm && pnpm install  --frozen-lockfile --config.ignore-scripts=true
 
-# Install pnpm globally
-RUN npm install -g pnpm
 
-# Copy package.json and package-lock.json to the working directory
-COPY package*.json ./
+FROM node:18-alpine AS builder
+ENV NODE_ENV production
 
-# Install dependencies using pnpm
-RUN pnpm install
+WORKDIR /usr/src/app
+COPY *.json ./
 
-# Copy the rest of the application code
-COPY . .
+COPY . ./
+COPY --from=development /usr/src/app/node_modules ./node_modules
 
-# Expose the port your app runs on
-EXPOSE 3000
+RUN npm i -g pnpm && pnpm run build && pnpm prune --prod --config.ignore-scripts=true
 
-# Start the application with hot reloading
-CMD ["pnpm", "run", "start:dev"]
+
+FROM node:18-alpine AS production
+
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+WORKDIR /usr/src/app
+COPY  *.json ./
+COPY *.pem ./
+COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+
+CMD ["npm", "run", "start:prod"]

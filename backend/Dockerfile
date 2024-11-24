@@ -1,32 +1,22 @@
-FROM node:18-alpine AS development
+FROM node:18-alpine
 
-WORKDIR /usr/src/app
-COPY  *.json ./
-COPY pnpm-lock.yaml ./
-COPY  . ./
-RUN npm i -g pnpm && pnpm install  --frozen-lockfile --config.ignore-scripts=true
+# Set the working directory in the container
+WORKDIR /app
 
 
-FROM node:18-alpine AS builder
-ENV NODE_ENV production
+RUN npm install -g pnpm
 
-WORKDIR /usr/src/app
-COPY *.json ./
+# Copy package.json and package-lock.json to the working directory
+COPY package*.json ./
 
-COPY . ./
-COPY --from=development /usr/src/app/node_modules ./node_modules
+# Install dependencies
+RUN pnpm install
 
-RUN npm i -g pnpm && pnpm run build && pnpm prune --prod --config.ignore-scripts=true
+# Copy the rest of the application code
+COPY . .
 
+# Expose the port your app runs on
+EXPOSE 3000
 
-FROM node:18-alpine AS production
-
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
-WORKDIR /usr/src/app
-COPY  *.json ./
-COPY *.pem ./
-COPY --from=builder /usr/src/app/dist ./dist
-COPY --from=builder /usr/src/app/node_modules ./node_modules
-
-CMD ["npm", "run", "start:prod"]
+# Command to run your app using npm
+CMD ["npm", "run", "start:dev"]

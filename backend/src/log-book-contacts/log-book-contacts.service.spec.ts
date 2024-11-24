@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { LogBookContactsService } from './log-book-contacts.service';
+import { LogBookContactsService } from './services/log-book-contacts.service';
 
 describe('LogBookContactsService', () => {
   let service: LogBookContactsService;

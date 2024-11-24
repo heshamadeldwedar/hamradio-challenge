@@ -32,7 +32,6 @@ export class FirebaseService {
   }
 
   public getDB() {
-    const app = this.initFirebase();
-    return getFirestore(app);
+    return getFirestore(this.initFirebase());
   }
 }

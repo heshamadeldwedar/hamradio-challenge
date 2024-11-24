@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LogBookContactsController } from './log-book-contacts.controller';
-import { LogBookContactsService } from './log-book-contacts.service';
+import { LogBookContactsService } from '../services/log-book-contacts.service';
 
 describe('LogBookContactsController', () => {
   let controller: LogBookContactsController;

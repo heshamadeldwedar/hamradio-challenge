@@ -19,4 +19,7 @@ COPY . .
 EXPOSE 3000
 
 # Command to run your app using npm
-CMD ["npm", "run", "start:dev"]
+
+RUN pnpm run build 
+
+CMD ["pnpm", "run", "dev"]

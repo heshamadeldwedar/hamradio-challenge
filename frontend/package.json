@@ -10,9 +10,11 @@
     "docker:dev": "waku build && PORT=80 waku dev"
   },
   "dependencies": {
+    "dayjs": "^1.11.13",
     "react": "19.0.0-rc-5c56b873-20241107",
     "react-dom": "19.0.0-rc-5c56b873-20241107",
     "react-server-dom-webpack": "19.0.0-rc-5c56b873-20241107",
+    "recharts": "^2.13.3",
     "styled-components": "^6.1.13",
     "waku": "0.21.6"
   },

@@ -42,6 +42,7 @@ export class LogBookContactsService {
         }
       });
       return logBookContacts;
+
     } catch (error) {
       console.error(error);
       return {

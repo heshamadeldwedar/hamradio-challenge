@@ -6,7 +6,9 @@ export class CallSignService {
 
   constructor(private readonly callSignRepo: CallSignRepository) {}
 
-  seed() {}
+  seed() {
+    return this.callSignRepo.getCallSignBatch();
+  }
 
   search(keyword: string) {
     return this.callSignRepo.search(keyword);

@@ -6,14 +6,18 @@ import {
   where,
   query,
   getDocs,
-  Timestamp,
-  orderBy,
 } from 'firebase/firestore/lite';
+import { InjectModel } from "@nestjs/sequelize";
+import { CallSignEntity } from "@/call-sign/entities/call-sign.entity";
 
 @Injectable()
 export class CallSignRepository {
 
-  constructor(private readonly firebaseService: FirebaseService) {}
+  constructor(
+    private readonly firebaseService: FirebaseService,
+    @InjectModel(CallSignEntity)
+    private readonly callSign: typeof CallSignEntity
+  ) {}
 
   async search(keyword: string) : Promise<CallSignDto | null> {
     try {
@@ -32,6 +36,13 @@ export class CallSignRepository {
       console.error(error);
       return null;
     }
+  }
+
+  async getCallSignBatch() {
+    const callSigns = await this.callSign.findAll({
+      limit: 100,
+    });
+    return callSigns;
   }
 
 }

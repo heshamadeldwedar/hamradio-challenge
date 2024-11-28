@@ -1,5 +1,7 @@
-import { LineChart } from '../components/line-chart';
-import { Dayjs } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
+
+import { WeeklyLogCountChart } from '../components/weekly-log-count-chart';
+import { ChartControl } from '../components/chart-control';
 
 export default async function HomePage() {
   const style = {
@@ -14,9 +16,8 @@ export default async function HomePage() {
         <h1 className="text-4xl font-bold tracking-tight">Number of Contacts Per Day</h1>
       </div>
 
-      <div className="w-full">
-        <LineChart callback={getData} data={data} />
-
+      <div className="w-full flex flex-wrap p-5">
+        <WeeklyLogCountChart />
       </div>
 
     </div>
@@ -24,14 +25,6 @@ export default async function HomePage() {
 }
 
 
-const getData = async (from: Dayjs, to: Dayjs) => {
-  const response = await fetch(`backend?from=${from.toISOString()}&to=${to.toISOString()}`, {
-    method: 'GET',
-  });
-  console.log('the value of ', response);
-  return response.json();
-
-};
 
 
 export const getConfig = async () => {

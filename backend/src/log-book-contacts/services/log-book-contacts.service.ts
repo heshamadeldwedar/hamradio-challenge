@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { FirebaseService } from 'src/firebase/firebase.service';
 import { GetCountPerDayValidation } from '@/log-book-contacts/validations/get-count-per-day.validation';
+import { groupBy, AggregationType } from '@/shared/helper/group-by';
+
 import dayjs from 'dayjs';
 
 import {
@@ -41,10 +43,12 @@ export class LogBookContactsService {
           contactTimeStamp: data.contactTimeStamp,
         }
       });
-      return logBookContacts;
+
+      return groupBy<any>(logBookContacts, 'date', {
+        id: { type: AggregationType.COUNT, as: 'count' },
+      });
 
     } catch (error) {
-      console.error(error);
       return {
         notFound: 'notFound',
       };

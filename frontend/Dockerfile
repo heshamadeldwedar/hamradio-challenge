@@ -20,7 +20,4 @@ RUN pnpm install
 # Copying all the files in our project
 COPY . .
 
-# Starting our application
-RUN PNPM run build
-
-CMD ["pnpm","run", "dev"]
+CMD ["pnpm","run", "docker:dev"]

@@ -1,57 +1,38 @@
 import { Injectable } from '@nestjs/common';
-import { FirebaseService } from 'src/firebase/firebase.service';
 import { GetCountPerDayValidation } from '@/log-book-contacts/validations/get-count-per-day.validation';
 import { groupBy, AggregationType } from '@/shared/helper/group-by';
-
+import { LogBookContactsRepository } from '@/log-book-contacts/repositories/log-book-contacts.repository';
+import { ITimelineDataPoint } from '../interface/timeline.interface';
 import dayjs from 'dayjs';
 
-import {
-  collection,
-  where,
-  query,
-  getDocs,
-  Timestamp,
-  orderBy,
-} from 'firebase/firestore/lite';
+
 
 @Injectable()
 export class LogBookContactsService {
-  constructor(private readonly firebaseService: FirebaseService) {}
+  constructor(private readonly logRepo: LogBookContactsRepository) {}
 
-  async getCountPerDay(filter: GetCountPerDayValidation) {
-    try {
+  async getCountPerDay(filter: GetCountPerDayValidation): Promise<Array<ITimelineDataPoint>> {
 
-      const from = Timestamp.fromDate(dayjs(filter.from).startOf('day').toDate());
-      const to = Timestamp.fromDate(dayjs(filter.to).endOf('day').toDate());
+    const logBookContacts = await this.logRepo.getLogBookContentByDate(filter);
+    const groupedByDate: Array<ITimelineDataPoint> = groupBy<any>(logBookContacts, 'date', {
+      id: { type: AggregationType.COUNT, as: 'count' },
+    }) as unknown as Array<ITimelineDataPoint>;
 
-      const db = this.firebaseService.getDB();
-      const LogBookContactCollection = collection(db, 'LogBookContact');
-      const logBookQuery = await query(
-        LogBookContactCollection,
-        where('contactTimeStamp', '!=', null),
-        where('contactTimeStamp', '>=', from),
-        where('contactTimeStamp', '<=', to),
-        orderBy('contactTimeStamp', 'desc'),
-      );
+    // construct a timeline of the data
+    const timeline: Array<ITimelineDataPoint> = [];
 
-      const logBookSnapShot = await getDocs(logBookQuery);
-      const logBookContacts = logBookSnapShot.docs.map((document) => {
-        const data = document.data();
-        return {
-          id: document.id,
-          date: data.date,
-          contactTimeStamp: data.contactTimeStamp,
-        }
+    // remove time from date
+    const start = dayjs(filter.from).startOf('day');
+    const end = dayjs(filter.to).endOf('day');
+
+    for (let date = start; date.isBefore(end); date = date.add(1, 'day')) {
+      const dateStr = date.format('MM-DD');
+      const count = groupedByDate.find((item) => item.date === date.format('YYYY-MM-DD'))?.count || 0;
+      timeline.push({
+        date: dateStr,
+        count,
       });
-
-      return groupBy<any>(logBookContacts, 'date', {
-        id: { type: AggregationType.COUNT, as: 'count' },
-      });
-
-    } catch (error) {
-      return {
-        notFound: 'notFound',
-      };
     }
+    return timeline;
   }
 }

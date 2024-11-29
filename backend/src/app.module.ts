@@ -6,7 +6,9 @@ import { CallSignModule } from './call-sign/call-sign.module';
 import configurations from '@/config/configurations';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { CallSignEntity } from '@/call-sign/entities/call-sign.entity';
+import { CallsignBatchJobsEntity } from '@/call-sign/entities/callsign-batch-jobs.entity';
 
+console.log('the value of db name: ', process.env.DB_NAME);
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -18,12 +20,12 @@ import { CallSignEntity } from '@/call-sign/entities/call-sign.entity';
     CallSignModule,
     SequelizeModule.forRoot({
       dialect: 'mysql',
-      host: 'hamradio-db',
-      port: 3306,
-      username: 'root',
-      password: 'password',
-      database: 'fcc_amateur',
-      models: [CallSignEntity],
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT),
+      username: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      models: [CallSignEntity, CallsignBatchJobsEntity],
     })
   ],
   controllers: [],

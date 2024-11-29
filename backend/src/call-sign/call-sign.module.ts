@@ -5,13 +5,14 @@ import { CallSignRepository } from '@/call-sign/repositories/call-sign.repositor
 import { FirebaseService } from '@/firebase/firebase.service';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { CallSignEntity } from '@/call-sign/entities/call-sign.entity';
+import { CallsignBatchJobsEntity } from '@/call-sign/entities/callsign-batch-jobs.entity';
 
 
 @Module({
   controllers: [CallSignController],
   providers: [FirebaseService, CallSignService, CallSignRepository],
   imports: [
-    SequelizeModule.forFeature([CallSignEntity]),
+    SequelizeModule.forFeature([CallSignEntity, CallsignBatchJobsEntity]),
   ]
 })
 export class CallSignModule {}

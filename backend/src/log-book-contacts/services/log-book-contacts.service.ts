@@ -12,7 +12,6 @@ export class LogBookContactsService {
   constructor(private readonly logRepo: LogBookContactsRepository) {}
 
   async getCountPerDay(filter: GetCountPerDayValidation): Promise<Array<ITimelineDataPoint>> {
-
     const logBookContacts = await this.logRepo.getLogBookContentByDate(filter);
     const groupedByDate: Array<ITimelineDataPoint> = groupBy<any>(logBookContacts, 'date', {
       id: { type: AggregationType.COUNT, as: 'count' },

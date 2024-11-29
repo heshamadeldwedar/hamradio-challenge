@@ -1,4 +1,3 @@
-```markdown
 # Ham Radio Prep Challenge - Monorepo
 
 This repository contains both frontend and backend code for the Ham Radio Prep Challenge application.

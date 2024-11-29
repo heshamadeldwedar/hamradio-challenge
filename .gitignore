@@ -12,10 +12,6 @@ backend/dist
 frontend/.env
 backend/.env
 
-# Ignore Docker Compose artifacts
-docker-compose.override.yml
-docker-compose.yml
-
 
 # Ignore log files
 *.log

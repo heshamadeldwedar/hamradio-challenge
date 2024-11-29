@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app
+      - ./backend/node_modules:/usr/src/app/node_modules
+    ports:
+      - "80:80"
+      - "9229:9229"
+    depends_on:
+      - hamradio-db
+    environment:
+      - DB_HOST=hamradio-db
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_NAME=fcc_amateur
+      - firebase_api_key=${firebase_api_key}
+      - firebase_auth_domain=${firebase_auth_domain}
+      - firebase_project_id=${firebase_project_id}
+      - firebase_storage_bucket=${firebase_storage_bucket}
+      - firebase_message_sender_id=${firebase_message_sender_id}
+      - firebase_app_id=${firebase_app_id}
+      - firebase_measurement_id=${firebase_measurement_id}
+
+  hamradio-db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: fcc_amateur
+      MYSQL_USER: hamradio
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql.cnf:/etc/mysql/conf.d/mysql.cnf
+      - persistent:/var/lib/mysql
+
+  hamradio-front:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/usr/src/app
+      - ./frontend/node_modules:/usr/src/app/node_modules
+    ports:
+      - "3000:3000"
+      - "24678:24678"
+    environment:
+      - REACT_APP_API_URL=http://localhost:80
+      - BACKEND_URL=http://backend:3000
+      - PORT=3000
+      - NODE_ENV=development
+
+volumes:
+  persistent:

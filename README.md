@@ -116,20 +116,6 @@ curl -X POST http://localhost/api/seed
 9. Check jobs progress and re-run failed jobs go to your browser and navigate to: `http://localhost/api/queues` 
 ![alt text](image.png)
 
-## Development
-
-Frontend development server runs on port 3000 by default:
-```bash
-cd frontend
-npm run dev
-```
-
-Backend development server runs on port 80 by default:
-```bash
-cd backend
-pnpm run dev
-```
-
 ## Additional Information
 
 - Frontend runs on: http://localhost:3000

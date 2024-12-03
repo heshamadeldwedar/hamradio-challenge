@@ -47,7 +47,7 @@ export class CallSignRepository {
   getCallSignBatch() {
 
     let offset = 0;
-    const limit = 100;
+    const limit = 500;
 
     return async () => {
       const callSignBatch = await this.callSign.findAll({
@@ -64,13 +64,12 @@ export class CallSignRepository {
   getJobs() {
 
     let offset = 0;
-    const limit = 100;
+    const limit = 10;
 
     return async () => {
       const jobs = await this.callSignBatchJobs.findAll({
         offset,
         limit,
-        raw: true,
       });
       offset += limit;
       return jobs;
@@ -100,13 +99,13 @@ export class CallSignRepository {
       batchWrite.set(docRef, payload);
     });
 
-    batchWrite.commit();
+    await batchWrite.commit();
 
     batch.update({
       status: 'completed',
     });
 
-    batch.save();
+    await batch.save();
   }
 
   async createInProgressBatches(retryCount = 0) {
@@ -196,12 +195,12 @@ export class CallSignRepository {
 
   
 
-  private async delete30Checksum(checksums: string[]) {
+  async delete30Checksum(checksums: string[]) {
     const db = this.firebaseService.getDB();
     const callSignCollection = collection(db, 'CallsignTest');
     const callSignQuery = await query(
       callSignCollection,
-      where('batch_checksum', 'in', checksums)
+      where('batch_checksum', '!=', null)
     );
     const snapShot = await getDocs(callSignQuery);
     const batch = writeBatch(db);

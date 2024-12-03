@@ -65,18 +65,29 @@ pnpm install
 ```
 
 4. Environment Setup
-Create a `.env` file in the backend directory. Contact the development team for the required environment variables.
+Copy the `.env.example` file in the backend directory and rename it to `.env`.
 
-Example structure:
-```env
-# Contact developer for actual values
-DB_HOST=
-DB_USER=
-DB_PASSWORD=
-DB_NAME=
-JWT_SECRET=
-# ... other required variables
+Then add your google firestore credentials to the `.bashrc` file or `.zshrc` file:
+
+```bash
+export firebase_api_key="<API_KEY>"
+export firebase_auth_domain="<AUTH_DOMAIN>"
+export firebase_project_id="<PROJECT_ID>"
+export firebase_storage_bucket="<STORAGE_BUCKET>"
+export firebase_message_sender_id="<MESSAGE_SENDER_ID>"
+export firebase_app_id="<APP_ID>"
+export firebase_measurement_id="<MEASUREMENT_ID>"
 ```
+
+Then run the following command to update the environment variables:
+```
+source ~/.bashrc
+
+# or
+
+source ~/.zshrc
+```
+
 
 5. Start Docker Services
 From the root directory:
@@ -94,7 +105,16 @@ docker exec -it <backend_container> pnpm run migration:up
 ```bash
 chmod +x ./backend/hamdb
 hamdb full
+
 ```
+
+8. Call new seed endpoint if you want to seed the database
+```
+curl -X POST http://localhost/api/seed
+```
+
+9. Check jobs progress and re-run failed jobs go to your browser and navigate to: `http://localhost/api/queues` 
+![alt text](image.png)
 
 ## Development
 
@@ -126,6 +146,7 @@ If you encounter any issues:
 3. Verify environment variables are properly set
 4. Ensure database connection is established
 5. Check container status: `docker ps`
+6. Run `pnpm install` on backend and `npm install` on frontend with node version 18 and restart the container since its a dev container
 
 For additional help, contact the development team.
 

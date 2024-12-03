@@ -10,7 +10,11 @@ export class CreateBatchConsumer extends WorkerHost{
     }
 
     async process(job: Job, token?: string): Promise<any> {
-      this.callSignRepo.createCallsignMigrationBatch({ ...job.data });
+
+      const batch = await this.callSignRepo.createCallsignMigrationBatch({ ...job.data });
+      if (batch.length > 0 && batch[0].status !== 'completed') {
+        await this.callSignRepo.migrateSingleBatch(batch[0]);
+      }
     }
 
 }

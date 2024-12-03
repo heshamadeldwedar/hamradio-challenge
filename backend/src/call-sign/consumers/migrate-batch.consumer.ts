@@ -10,7 +10,7 @@ export class MigrateBatchConsumer extends WorkerHost{
     }
 
     async process(job: Job, token?: string): Promise<any> {
-      this.callSignRepo.migrateSingleBatch({ ...job.data });
+      await this.callSignRepo.migrateSingleBatch({ ...job.data });
     }
 
 }

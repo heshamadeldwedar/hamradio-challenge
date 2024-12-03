@@ -26,6 +26,8 @@ services:
       - firebase_message_sender_id=${firebase_message_sender_id}
       - firebase_app_id=${firebase_app_id}
       - firebase_measurement_id=${firebase_measurement_id}
+      - REDIS_HOST=hamradio-redis
+      - REDIS_PORT=6379
 
   hamradio-db:
     image: mysql:8
@@ -56,6 +58,11 @@ services:
       - BACKEND_URL=http://backend:3000
       - PORT=3000
       - NODE_ENV=development
+
+  hamradio-redis:
+    image: redis:6
+    ports:
+      - "6379:6379"
 
 volumes:
   persistent:

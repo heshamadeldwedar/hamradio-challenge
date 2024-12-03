@@ -70,7 +70,7 @@ export const WeeklyLogCountChart = () => {
 
 async function getData(from: Dayjs, to: Dayjs) {
   try {
-    const response = await fetch(`http://localhost/log-book-contacts/count-per-day?from=${from.toISOString()}&to=${to.toISOString()}`, {
+    const response = await fetch(`http://localhost/api/log-book-contacts/count-per-day?from=${from.toISOString()}&to=${to.toISOString()}`, {
       method: 'GET',
     });
     const result = await response.json();

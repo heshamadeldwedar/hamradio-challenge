@@ -63,7 +63,9 @@ export class CallSignService {
       batchCount += 1;
       recordsCount += jobs.length;
 
-      this.migrationQueue.addBulk(jobs);
+      jobs.forEach((job) => {
+        this.migrationQueue.add('migrate-batch', job);
+      });
 
     } while (jobs.length > 0);
 

@@ -15,4 +15,8 @@ export default () => ({
     APP_ID: process.env.firebase_app_id,
     MEASUREMENT_ID: process.env.firebase_measurement_id,
   },
+  REDIS: {
+    HOST: process.env.REDIS_HOST,
+    PORT: process.env.REDIS_PORT,
+  }
 });

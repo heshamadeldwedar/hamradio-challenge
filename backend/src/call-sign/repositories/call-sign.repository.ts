@@ -47,7 +47,7 @@ export class CallSignRepository {
   getCallSignBatch() {
 
     let offset = 0;
-    const limit = 5;
+    const limit = 100;
 
     return async () => {
       const callSignBatch = await this.callSign.findAll({
@@ -61,7 +61,55 @@ export class CallSignRepository {
 
   }
 
-  async createInProgressBatches() {
+  getJobs() {
+
+    let offset = 0;
+    const limit = 100;
+
+    return async () => {
+      const jobs = await this.callSignBatchJobs.findAll({
+        offset,
+        limit,
+        raw: true,
+      });
+      offset += limit;
+      return jobs;
+    };
+
+  }
+
+  async migrateSingleBatch (batch) {
+
+    const db = this.firebaseService.getDB();
+    const callSignCollection = collection(db, 'CallsignTest');
+    const batchWrite = writeBatch(db);
+    const callsigns = await this.callSign.findAll({
+      where: {
+        fccid: {
+          [Op.in]: batch.fccids,
+        },
+      }
+    });
+
+    callsigns.forEach((callsign) => {
+      const payload = {
+        ...callsign.toJSON(),
+        batch_checksum: batch.checksum,
+      }
+      const docRef = doc(callSignCollection);
+      batchWrite.set(docRef, payload);
+    });
+
+    batchWrite.commit();
+
+    batch.update({
+      status: 'completed',
+    });
+
+    batch.save();
+  }
+
+  async createInProgressBatches(retryCount = 0) {
 
     const batches = await this.getInProgressBatches();
 
@@ -70,41 +118,90 @@ export class CallSignRepository {
 
     for (const batch of batches) {
 
-      const batchWrite = writeBatch(db);
-      const callsigns = await this.callSign.findAll({
-        where: {
-          fccid: {
-            [Op.in]: batch.fccids,
-          },
-        }
-      });
+      try {
 
-      callsigns.forEach((callsign) => {
-        const payload = {
-          ...callsign.toJSON(),
-          batch_checksum: batch.checksum,
-        }
-        const docRef = doc(callSignCollection);
-        batchWrite.set(docRef, payload);
-      });
+        const batchWrite = writeBatch(db);
+        const callsigns = await this.callSign.findAll({
+          where: {
+            fccid: {
+              [Op.in]: batch.fccids,
+            },
+          }
+        });
 
-      batchWrite.commit();
+        callsigns.forEach((callsign) => {
+          const payload = {
+            ...callsign.toJSON(),
+            batch_checksum: batch.checksum,
+          }
+          const docRef = doc(callSignCollection);
+          batchWrite.set(docRef, payload);
+        });
 
-      batch.update({
-        status: 'completed',
-      });
+        batchWrite.commit();
 
-      batch.save();
+        batch.update({
+          status: 'completed',
+        });
+
+        batch.save();
+      }
+      catch (error) {
+
+        const errorMessage = error.message || 'An error occurred while creating in-progress batches';
+        await this.callSignBatchJobs.update({
+          status: 'failed',
+          errorMessage: errorMessage,
+        }, {
+          where: {
+            checksum: batch.checksum,
+          }
+        }); 
+        await this.createInProgressBatches();
+      }
     }
+  }
+
+  async markCompletedJobForDeletion () {
+    return this.callSignBatchJobs.update({
+      status: 'marked-for-deletion',
+    }, {
+      where: {
+        status: 'completed',
+      },
+    });
   }
 
   async deleteDocumentsThatAreMarkedForDeletion() {
     const checksums = await this.getBatchesMarkedForDeletion();
+    if (checksums.length === 0) {
+      return;
+    }
+
+    let markedForDeletion = [];
+    for (const checksum of checksums) {
+
+      markedForDeletion.push(checksum);
+      if (markedForDeletion.length === 30) {
+        await this.delete30Checksum(markedForDeletion);
+        markedForDeletion = [];
+      }
+    }
+    if (markedForDeletion.length > 0) {
+      await this.delete30Checksum(markedForDeletion);
+    }
+
+
+  }
+
+  
+
+  private async delete30Checksum(checksums: string[]) {
     const db = this.firebaseService.getDB();
     const callSignCollection = collection(db, 'CallsignTest');
     const callSignQuery = await query(
       callSignCollection,
-      where('batch_checksum', 'in', checksums),
+      where('batch_checksum', 'in', checksums)
     );
     const snapShot = await getDocs(callSignQuery);
     const batch = writeBatch(db);
@@ -118,8 +215,6 @@ export class CallSignRepository {
       },
     });
   }
-
-  
 
   async getBatchesMarkedForDeletion() {
     const result = await this.callSignBatchJobs.findAll({

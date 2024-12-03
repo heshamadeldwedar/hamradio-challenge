@@ -1,46 +1,45 @@
 import { Injectable } from '@nestjs/common';
 import { CallSignRepository } from '@/call-sign/repositories/call-sign.repository';
 import  * as Crypto  from 'node:crypto';
-import { create } from 'node:domain';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class CallSignService {
 
-  constructor(private readonly callSignRepo: CallSignRepository) {}
+  constructor(
+        private readonly callSignRepo: CallSignRepository, 
+        @InjectQueue('create-batch') private batchQueue: Queue,
+        @InjectQueue('migrate-batch') private migrationQueue: Queue,
+      ) {}
 
-  async seed() {
+  async refreshFirestore () {
+    await this.callSignRepo.markCompletedJobForDeletion();
+    await this.callSignRepo.deleteDocumentsThatAreMarkedForDeletion();
+  }
+
+  async createBatches() {
     const next = this.callSignRepo.getCallSignBatch();
     let callSigns = [];
     let batchCount = 0;
     let recordsCount = 0;
     const migrations: Array<{ checksum: string, fccids: Array<string>}> = [];
 
+
     do {
 
       callSigns = await next();
       batchCount += 1;
       recordsCount += callSigns.length;
-      migrations.push({
-        checksum: this.createChecksum(callSigns),
+
+
+      const checksum = this.createChecksum(callSigns);
+      this.batchQueue.add('create-batch', {
+        checksum,
         fccids: callSigns.map((callSign) => callSign.fccid),
       });
 
-    } while (batchCount === 1);
-
-    // mark any hashes that is not in the db as marked-for-deletion //
-    await this.callSignRepo.deleteOldHashes(migrations.map((migration) => migration.checksum));
-
-    const insertMigrations = migrations.map((migration) => {
-      return this.callSignRepo.createCallsignMigrationBatch({ checksum: migration.checksum, fccids: migration.fccids });
-    });
-
-    await Promise.all(insertMigrations);
-
-    await this.callSignRepo.deleteDocumentsThatAreMarkedForDeletion();
-
-    // create ( in progress ) callsigns //
-    await this.callSignRepo.createInProgressBatches();
-
+    } while (callSigns.length > 0);
 
 
     return {
@@ -49,6 +48,34 @@ export class CallSignService {
       checksums: migrations,
     };
   }
+  
+  async migrateBatches() {
+
+    const next = this.callSignRepo.getJobs();
+    let jobs = [];
+    let batchCount = 0;
+    let recordsCount = 0;
+    const migrations: Array<{ checksum: string, fccids: Array<string>}> = [];
+
+    do {
+
+      jobs = await next();
+      batchCount += 1;
+      recordsCount += jobs.length;
+
+      this.migrationQueue.addBulk(jobs);
+
+    } while (jobs.length > 0);
+
+
+    return {
+      batchCount,
+      recordsCount,
+      checksums: migrations,
+    };
+  }
+
+
 
   search(keyword: string) {
     return this.callSignRepo.search(keyword);

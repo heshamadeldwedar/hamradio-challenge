@@ -7,8 +7,19 @@ export class CallSignController {
 
   @Post('/seed')
   create() {
-    return this.callSignService.seed();
+    return this.callSignService.createBatches();
   }
+
+  @Post('/refresh')
+  refresh() {
+    return this.callSignService.refreshFirestore();
+  }
+
+  @Post('/migrate')
+  migrate() {
+    return this.callSignService.migrateBatches();
+  }
+
 
   @Get('/search/:keyword')
   fuzzySearch(@Param('keyword') keyword: string) {
